@@ -24,6 +24,20 @@ namespace Client
                         Console.WriteLine(String.Format("{0:X}", buffer[0]));
                     }
 
+                    if (Checks.FindWindow("Cheat Engine 6.5"))
+                    {
+                        Console.WriteLine("Yep");
+                    }
+
+                    Console.WriteLine(Checks.FileHash("test.exe"));
+
+                    string hash = "";
+
+                    if (Checks.ReadMemoryHash(game, "ntdll.dll", 0, 1, ref hash))
+                    {
+                        Console.WriteLine(hash);
+                    }
+
                     game.WaitForExit();
                 }
             }
