@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Client
 {
@@ -27,6 +23,21 @@ namespace Client
                     return BitConverter.ToString(md5.ComputeHash(stream)).Replace("-", "");
                 }
             }
+        }
+
+        public static bool IsDllLoaded(GameProcess game, string hash)
+        {
+            for (int i = 0; i < game.Modules.Count; i++)
+            {
+                var module = game.Modules[i];
+
+                if (FileHash(module.FileName) == hash)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public static bool FindWindow(string caption)

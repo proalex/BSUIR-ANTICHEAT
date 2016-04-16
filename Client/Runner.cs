@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Client
 {
@@ -36,6 +32,11 @@ namespace Client
                     if (Checks.ReadMemoryHash(game, "ntdll.dll", 0, 1, ref hash))
                     {
                         Console.WriteLine(hash);
+                    }
+
+                    if (Checks.IsDllLoaded(game, "097AA1113BF9C60994C2425C7547B760"))
+                    {
+                        Console.WriteLine("yep2");
                     }
 
                     game.WaitForExit();
