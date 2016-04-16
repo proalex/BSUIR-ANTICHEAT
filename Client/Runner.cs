@@ -13,9 +13,19 @@ namespace Client
             GameProcess game = new GameProcess("test.exe");
             game.Start();
 
-            if (game.IsRunning())
+            if (game.Running)
             {
-                game.WaitForExit();
+                if (game.EnableDebugPrivilege())
+                {
+                    byte[] buffer = new byte[1];
+
+                    if(Checks.ReadMemory(game, "ntdll.dll", 0, 1, buffer))
+                    {
+                        Console.WriteLine(String.Format("{0:X}", buffer[0]));
+                    }
+
+                    game.WaitForExit();
+                }
             }
         }
     }

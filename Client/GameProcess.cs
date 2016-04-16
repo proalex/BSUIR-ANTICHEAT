@@ -147,6 +147,26 @@ namespace Client
 
         private Process _process;
 
+        public ProcessModuleCollection Modules
+        {
+            get { return Running ? _process.Modules : null; }
+        }
+
+        public IntPtr BaseAddress
+        {
+            get { return Running ? _process.MainModule.BaseAddress : IntPtr.Zero; }
+        }
+
+        public IntPtr Handle
+        {
+            get { return _process.Handle; }
+        }
+
+        public bool Running
+        {
+            get { return !_process.HasExited; }
+        }
+
         public GameProcess(string path)
         {
             _process = new Process();
@@ -160,7 +180,7 @@ namespace Client
 
         public void WaitForExit()
         {
-            if (IsRunning())
+            if (Running)
             {
                 _process.WaitForExit();
             }
@@ -168,24 +188,19 @@ namespace Client
 
         public void Kill()
         {
-            if (IsRunning())
+            if (Running)
             {
                 _process.Kill();
             }
         }
 
-        public bool IsRunning()
-        {
-            return !_process.HasExited;
-        }
-
-        bool EnableDebugPrivilege()
+        public bool EnableDebugPrivilege()
         {
             IntPtr hToken;
             LUID luidSEDebugNameValue;
             TOKEN_PRIVILEGES tkpPrivileges;
 
-            if (!IsRunning())
+            if (!Running)
             {
                 return false;
             }
