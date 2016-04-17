@@ -39,6 +39,13 @@ namespace Client
                         Console.WriteLine("yep2");
                     }
 
+                    PatternElement[] pattern = new PatternElement[2];
+
+                    pattern[0].check = true;
+                    pattern[0].data = 0x90;
+                    pattern[1].check = true;
+                    pattern[1].data = 0x90;
+                    Console.WriteLine(Checks.FindPatternInMemory(game, pattern));
                     game.WaitForExit();
                 }
             }
