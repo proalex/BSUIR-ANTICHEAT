@@ -1,4 +1,7 @@
 ﻿using System;
+using System.IO;
+using System.Net;
+using System.Net.Sockets;
 
 namespace Client
 {
@@ -6,47 +9,60 @@ namespace Client
     {
         public static void Main(string[] args)
         {
-            GameProcess game = new GameProcess("test.exe");
-            game.Start();
+            Session session = null;
 
-            if (game.Running)
+            try
             {
-                if (game.EnableDebugPrivilege())
+                IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
+                IPAddress ipAddress = ipHostInfo.AddressList[0];
+                IPEndPoint remoteEP = new IPEndPoint(ipAddress, 43555);
+                Socket client = new Socket(AddressFamily.InterNetwork,
+                    SocketType.Stream, ProtocolType.Tcp);
+
+                client.Connect(remoteEP);
+
+                NetworkStream stream = new NetworkStream(client);
+                BinaryReader reader = new BinaryReader(stream);
+                BinaryWriter writer = new BinaryWriter(stream);
+
+                session = new Session(client);
+
+                PacketHandler handler = new PacketHandler(session);
+
+                do
                 {
-                    byte[] buffer = new byte[1];
+                    ushort size = reader.ReadUInt16();
+                    byte opcodeByte = reader.ReadByte();
+                    byte[] data = new byte[size];
 
-                    if(Checks.ReadMemory(game, "ntdll.dll", 0, 1, buffer))
+                    data = reader.ReadBytes(size);
+
+                    Opcodes opcode = (Opcodes)Enum.ToObject(typeof(Opcodes), opcodeByte);
+                    Packet request = new Packet(opcode, data);
+
+                    Packet response = handler.Handle(request);
+
+                    if (response == null)
                     {
-                        Console.WriteLine(String.Format("{0:X}", buffer[0]));
+                        break;
                     }
 
-                    if (Checks.FindWindow("Cheat Engine 6.5"))
-                    {
-                        Console.WriteLine("Yep");
-                    }
+                    writer.Write((ushort)response.Data.GetLength(0));
+                    writer.Write((ushort)response.Opcode);
+                    writer.Write(response.Data);
+                } while (true);
 
-                    Console.WriteLine(Checks.FileHash("test.exe"));
-
-                    string hash = "";
-
-                    if (Checks.ReadMemoryHash(game, "ntdll.dll", 0, 1, ref hash))
-                    {
-                        Console.WriteLine(hash);
-                    }
-
-                    if (Checks.IsDllLoaded(game, "097AA1113BF9C60994C2425C7547B760"))
-                    {
-                        Console.WriteLine("yep2");
-                    }
-
-                    PatternElement[] pattern = new PatternElement[2];
-
-                    pattern[0].check = true;
-                    pattern[0].data = 0x90;
-                    pattern[1].check = true;
-                    pattern[1].data = 0x90;
-                    Console.WriteLine(Checks.FindPatternInMemory(game, pattern));
-                    game.WaitForExit();
+                client.Shutdown(SocketShutdown.Both);
+                client.Close();
+            }
+            catch (Exception e)
+            {
+            }
+            finally
+            {
+                if (session != null)
+                {
+                    session.Stop();
                 }
             }
         }

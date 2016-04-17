@@ -59,9 +59,19 @@ namespace Client
 
         public static int FindPatternInMemory(GameProcess game, PatternElement[] pattern)
         {
-            int result = 0;
+            if (game == null)
+            {
+                throw new NullReferenceException("game is null");
+            }
 
+            if (pattern == null)
+            {
+                throw new NullReferenceException("pattern is null");
+            }
+
+            int result = 0;
             SYSTEM_INFO sys_info = new SYSTEM_INFO();
+
             GetSystemInfo(out sys_info);
 
             IntPtr proc_min_address = sys_info.minimumApplicationAddress;
@@ -69,7 +79,6 @@ namespace Client
             long proc_min_address_l = (long)proc_min_address;
             long proc_max_address_l = (long)proc_max_address;
             MEMORY_BASIC_INFORMATION mem_basic_info = new MEMORY_BASIC_INFORMATION();
-
             IntPtr bytesRead;
 
             while (proc_min_address_l < proc_max_address_l)
@@ -127,6 +136,11 @@ namespace Client
 
         public static string FileHash(string filename)
         {
+            if (filename == null)
+            {
+                throw new NullReferenceException("filename is null");
+            }
+
             using (var md5 = MD5.Create())
             {
                 using (var stream = File.OpenRead(filename))
@@ -138,6 +152,16 @@ namespace Client
 
         public static bool IsDllLoaded(GameProcess game, string hash)
         {
+            if (game == null)
+            {
+                throw new NullReferenceException("game is null");
+            }
+
+            if (hash == null)
+            {
+                throw new NullReferenceException("hash is null");
+            }
+
             for (int i = 0; i < game.Modules.Count; i++)
             {
                 var module = game.Modules[i];
@@ -153,12 +177,27 @@ namespace Client
 
         public static bool FindWindow(string caption)
         {
+            if (caption == null)
+            {
+                throw new NullReferenceException("caption is null");
+            }
+
             return FindWindow(null, caption).ToInt64() == 0 ? false : true;
         }
 
         public static bool ReadMemoryHash(GameProcess game, string moduleName, long offset,
             int size, ref string hash)
         {
+            if (game == null)
+            {
+                throw new NullReferenceException("game is null");
+            }
+
+            if (moduleName == null)
+            {
+                throw new NullReferenceException("moduleName is null");
+            }
+
             byte[] buffer = new byte[size];
 
             if (!ReadMemory(game, moduleName, offset, size, buffer))
@@ -177,6 +216,16 @@ namespace Client
         public static bool ReadMemory(GameProcess game, string moduleName, long offset, 
             int size, byte[] buffer)
         {
+            if (game == null)
+            {
+                throw new NullReferenceException("game is null");
+            }
+
+            if (moduleName == null)
+            {
+                throw new NullReferenceException("moduleName is null");
+            }
+
             if (!game.Running)
             {
                 return false;
