@@ -24,6 +24,7 @@ namespace Client
             _handlers.Add(Opcodes.MODULE, ModuleHandler);
             _handlers.Add(Opcodes.WINDOW, WindowHandler);
             _handlers.Add(Opcodes.MEMORY_HASH, MemoryHashHandler);
+            _handlers.Add(Opcodes.START_GAME, StartGameHandler);
         }
 
         public Packet Handle(Packet request)
@@ -134,6 +135,25 @@ namespace Client
 
             uint result = Checks.FindPatternInMemory(_session.Game, pattern);
             Packet response = new Packet(Opcodes.MEMORY_PATTERN, BitConverter.GetBytes(result));
+            return response;
+        }
+
+        private Packet StartGameHandler(Packet request)
+        {
+            if (request == null)
+            {
+                throw new NullReferenceException("request is null");
+            }
+
+            ushort length = BitConverter.ToUInt16(request.Data, 0);
+            string path = Encoding.UTF8.GetString(request.Data, 2, length);
+
+            if (_session.RunGame(path) == false)
+            {
+                return null;
+            }
+
+            Packet response = new Packet(Opcodes.START_GAME, BitConverter.GetBytes(true));
             return response;
         }
     }

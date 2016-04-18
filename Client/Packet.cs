@@ -8,7 +8,8 @@ namespace Client
         FILE_HASH,
         MODULE,
         WINDOW,
-        MEMORY_HASH
+        MEMORY_HASH,
+        START_GAME
     }
 
     public class Packet
