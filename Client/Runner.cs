@@ -33,6 +33,7 @@ namespace Client
                 {
                     ushort size = reader.ReadUInt16();
                     byte opcodeByte = reader.ReadByte();
+                    ushort checkNumber = reader.ReadUInt16();
                     byte[] data = new byte[size];
 
                     data = reader.ReadBytes(size);
@@ -49,6 +50,7 @@ namespace Client
 
                     writer.Write((ushort)response.Data.GetLength(0));
                     writer.Write((ushort)response.Opcode);
+                    writer.Write(checkNumber);
                     writer.Write(response.Data);
                 } while (true);
 

@@ -57,7 +57,7 @@ namespace Client
         [DllImport("user32.dll", SetLastError = true)]
         static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
 
-        public static int FindPatternInMemory(GameProcess game, PatternElement[] pattern)
+        public static uint FindPatternInMemory(GameProcess game, PatternElement[] pattern)
         {
             if (game == null)
             {
@@ -69,7 +69,7 @@ namespace Client
                 throw new NullReferenceException("pattern is null");
             }
 
-            int result = 0;
+            uint result = 0;
             SYSTEM_INFO sys_info = new SYSTEM_INFO();
 
             GetSystemInfo(out sys_info);
