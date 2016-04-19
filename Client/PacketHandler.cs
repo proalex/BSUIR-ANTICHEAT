@@ -9,7 +9,7 @@ namespace Client
     public class PacketHandler
     {
         private Session _session;
-        private Dictionary<Opcodes, Handler> _handlers;
+        private Dictionary<Opcodes, Handler> _handlers = new Dictionary<Opcodes, Handler>();
 
         public PacketHandler(Session session)
         {
@@ -44,10 +44,10 @@ namespace Client
                 throw new NullReferenceException("request is null");
             }
 
-            ushort length = BitConverter.ToUInt16(request.Data, 0);
-            string path = Encoding.UTF8.GetString(request.Data, 2, length);
-            string hash = Checks.FileHash(path);
-            Packet response = new Packet(Opcodes.FILE_HASH, Encoding.Default.GetBytes(hash));
+            var length = BitConverter.ToUInt16(request.Data, 0);
+            var path = Encoding.UTF8.GetString(request.Data, 2, length);
+            var hash = Checks.FileHash(path);
+            var response = new Packet(Opcodes.FILE_HASH, Encoding.Default.GetBytes(hash));
             return response;
         }
 
@@ -58,10 +58,10 @@ namespace Client
                 throw new NullReferenceException("request is null");
             }
 
-            ushort length = BitConverter.ToUInt16(request.Data, 0);
-            string module = Encoding.UTF8.GetString(request.Data, 2, length);
-            bool result = Checks.IsDllLoaded(_session.Game, module);
-            Packet response = new Packet(Opcodes.MODULE, BitConverter.GetBytes(result));
+            var length = BitConverter.ToUInt16(request.Data, 0);
+            var module = Encoding.UTF8.GetString(request.Data, 2, length);
+            var result = Checks.IsDllLoaded(_session.Game, module);
+            var response = new Packet(Opcodes.MODULE, BitConverter.GetBytes(result));
             return response;
         }
 
@@ -72,10 +72,10 @@ namespace Client
                 throw new NullReferenceException("request is null");
             }
 
-            ushort length = BitConverter.ToUInt16(request.Data, 0);
-            string window = Encoding.UTF8.GetString(request.Data, 2, length);
-            bool result = Checks.FindWindow(window);
-            Packet response = new Packet(Opcodes.WINDOW, BitConverter.GetBytes(result));
+            var length = BitConverter.ToUInt16(request.Data, 0);
+            var window = Encoding.UTF8.GetString(request.Data, 2, length);
+            var result = Checks.FindWindow(window);
+            var response = new Packet(Opcodes.WINDOW, BitConverter.GetBytes(result));
             return response;
         }
 
@@ -86,28 +86,20 @@ namespace Client
                 throw new NullReferenceException("request is null");
             }
 
-            ushort length = BitConverter.ToUInt16(request.Data, 0);
-            string moduleName = Encoding.UTF8.GetString(request.Data, 2, length);
-            long offset = BitConverter.ToInt64(request.Data, length + 2);
-            int size = BitConverter.ToInt32(request.Data, length + 10);
-            bool result;
-            string hash= "";
+            var length = BitConverter.ToUInt16(request.Data, 0);
+            var moduleName = Encoding.UTF8.GetString(request.Data, 2, length);
+            var offset = BitConverter.ToInt64(request.Data, length + 2);
+            var size = BitConverter.ToInt32(request.Data, length + 10);
+            var hash= "";
 
-            if (length > 0)
-            {
-                result = Checks.ReadMemoryHash(_session.Game, moduleName, offset, size, ref hash);
-            }
-            else
-            {
-                result = Checks.ReadMemoryHash(_session.Game, null, offset, size, ref hash);
-            }
-
-            if (!result)
+            if (length > 0
+                ? Checks.ReadMemoryHash(_session.Game, moduleName, offset, size, ref hash)
+                : Checks.ReadMemoryHash(_session.Game, null, offset, size, ref hash))
             {
                 return null;
             }
 
-            Packet response = new Packet(Opcodes.MEMORY_HASH, Encoding.Default.GetBytes(hash));
+            var response = new Packet(Opcodes.MEMORY_HASH, Encoding.Default.GetBytes(hash));
             return response;
         }
 
@@ -118,23 +110,29 @@ namespace Client
                 throw new NullReferenceException("request is null");
             }
 
-            ushort length = BitConverter.ToUInt16(request.Data, 0);
+            var length = BitConverter.ToUInt16(request.Data, 0);
 
             if (length % 2 > 0 && length > 0)
             {
                 return null;
             }
 
-            PatternElement[] pattern = new PatternElement[length / 2];
+            var pattern = new PatternElement[length / 2];
 
-            for (int i = 0; i < length / 2; i++)
+            for (var i = 0; i < length / 2; i++)
             {
                 pattern[i].data = request.Data[i * 2 + 2];
                 pattern[i].check = BitConverter.ToBoolean(request.Data, i * 2 + 2);
             }
 
-            uint result = Checks.FindPatternInMemory(_session.Game, pattern);
-            Packet response = new Packet(Opcodes.MEMORY_PATTERN, BitConverter.GetBytes(result));
+            var result = Checks.FindPatternInMemory(_session.Game, pattern);
+
+            if (result == -1)
+            {
+                return null;
+            }
+
+            var response = new Packet(Opcodes.MEMORY_PATTERN, BitConverter.GetBytes(result));
             return response;
         }
 
@@ -145,15 +143,15 @@ namespace Client
                 throw new NullReferenceException("request is null");
             }
 
-            ushort length = BitConverter.ToUInt16(request.Data, 0);
-            string path = Encoding.UTF8.GetString(request.Data, 2, length);
+            var length = BitConverter.ToUInt16(request.Data, 0);
+            var path = Encoding.UTF8.GetString(request.Data, 2, length);
 
             if (_session.RunGame(path) == false)
             {
                 return null;
             }
 
-            Packet response = new Packet(Opcodes.START_GAME, BitConverter.GetBytes(true));
+            var response = new Packet(Opcodes.START_GAME, BitConverter.GetBytes(true));
             return response;
         }
     }

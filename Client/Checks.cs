@@ -57,7 +57,7 @@ namespace Client
         [DllImport("user32.dll", SetLastError = true)]
         static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
 
-        public static uint FindPatternInMemory(GameProcess game, PatternElement[] pattern)
+        public static int FindPatternInMemory(GameProcess game, PatternElement[] pattern)
         {
             if (game == null)
             {
@@ -69,16 +69,16 @@ namespace Client
                 throw new NullReferenceException("pattern is null");
             }
 
-            uint result = 0;
-            SYSTEM_INFO sys_info = new SYSTEM_INFO();
+            var result = 0;
+            var sys_info = new SYSTEM_INFO();
 
             GetSystemInfo(out sys_info);
 
-            IntPtr proc_min_address = sys_info.minimumApplicationAddress;
-            IntPtr proc_max_address = sys_info.maximumApplicationAddress;
-            long proc_min_address_l = (long)proc_min_address;
-            long proc_max_address_l = (long)proc_max_address;
-            MEMORY_BASIC_INFORMATION mem_basic_info = new MEMORY_BASIC_INFORMATION();
+            var proc_min_address = sys_info.minimumApplicationAddress;
+            var proc_max_address = sys_info.maximumApplicationAddress;
+            var proc_min_address_l = (long)proc_min_address;
+            var proc_max_address_l = (long)proc_max_address;
+            var mem_basic_info = new MEMORY_BASIC_INFORMATION();
             IntPtr bytesRead;
 
             while (proc_min_address_l < proc_max_address_l)
@@ -86,7 +86,7 @@ namespace Client
                 if (VirtualQueryEx(game.Handle, proc_min_address, out mem_basic_info,
                      (uint)Marshal.SizeOf(typeof(MEMORY_BASIC_INFORMATION))) == 0)
                 {
-                    int i = Marshal.GetLastWin32Error();
+                    var i = Marshal.GetLastWin32Error();
 
                     if (i == 0)
                     {
@@ -99,16 +99,16 @@ namespace Client
                 if (mem_basic_info.Protect == PAGE_READWRITE 
                     && mem_basic_info.State == MEM_COMMIT)
                 {
-                    byte[] buffer = new byte[mem_basic_info.RegionSize.ToInt64()];
+                    var buffer = new byte[mem_basic_info.RegionSize.ToInt64()];
 
                     ReadProcessMemory(game.Handle, (IntPtr)mem_basic_info.BaseAddress,
                         buffer, (uint)mem_basic_info.RegionSize.ToInt32(), out bytesRead);
 
-                    int found = 0;
+                    var found = 0;
 
                     for (long i = 0; i < mem_basic_info.RegionSize.ToInt64(); i++)
                     {
-                        byte data = buffer[i];
+                        var data = buffer[i];
 
                         if (!pattern[found].check || pattern[found].data == data)
                         {
@@ -162,7 +162,7 @@ namespace Client
                 throw new NullReferenceException("hash is null");
             }
 
-            for (int i = 0; i < game.Modules.Count; i++)
+            for (var i = 0; i < game.Modules.Count; i++)
             {
                 var module = game.Modules[i];
 
@@ -198,7 +198,7 @@ namespace Client
                 throw new NullReferenceException("moduleName is null");
             }
 
-            byte[] buffer = new byte[size];
+            var buffer = new byte[size];
 
             if (!ReadMemory(game, moduleName, offset, size, buffer))
             {
@@ -231,7 +231,7 @@ namespace Client
                 return false;
             }
 
-            IntPtr baseAddress = IntPtr.Zero;
+            var baseAddress = IntPtr.Zero;
 
             if (moduleName == null)
             {
@@ -239,7 +239,7 @@ namespace Client
             }
             else
             {
-                for (int i = 0; i < game.Modules.Count; i++)
+                for (var i = 0; i < game.Modules.Count; i++)
                 {
                     var module = game.Modules[i];
 

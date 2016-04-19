@@ -32,7 +32,7 @@ namespace Client
                 return false;
             }
 
-            GameProcess game = new GameProcess(path);
+            var game = new GameProcess(path);
 
             game.Start();
 

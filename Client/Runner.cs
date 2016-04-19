@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Windows.Forms;
 
 namespace Client
 {
@@ -13,35 +14,34 @@ namespace Client
 
             try
             {
-                IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
-                IPAddress ipAddress = ipHostInfo.AddressList[0];
-                IPEndPoint remoteEP = new IPEndPoint(ipAddress, 43555);
-                Socket client = new Socket(AddressFamily.InterNetwork,
+                var ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
+                var ipAddress = ipHostInfo.AddressList[0];
+                var remoteEP = new IPEndPoint(ipAddress, 43555);
+                var client = new Socket(AddressFamily.InterNetwork,
                     SocketType.Stream, ProtocolType.Tcp);
 
                 client.Connect(remoteEP);
 
-                NetworkStream stream = new NetworkStream(client);
-                BinaryReader reader = new BinaryReader(stream);
-                BinaryWriter writer = new BinaryWriter(stream);
+                var stream = new NetworkStream(client);
+                var reader = new BinaryReader(stream);
+                var writer = new BinaryWriter(stream);
 
                 session = new Session(client);
 
-                PacketHandler handler = new PacketHandler(session);
+                var handler = new PacketHandler(session);
 
                 do
                 {
-                    ushort size = reader.ReadUInt16();
-                    byte opcodeByte = reader.ReadByte();
-                    ushort checkNumber = reader.ReadUInt16();
-                    byte[] data = new byte[size];
+                    var size = reader.ReadUInt16();
+                    var opcodeByte = reader.ReadByte();
+                    var checkNumber = reader.ReadUInt16();
+                    var data = new byte[size];
 
                     data = reader.ReadBytes(size);
 
-                    Opcodes opcode = (Opcodes)Enum.ToObject(typeof(Opcodes), opcodeByte);
-                    Packet request = new Packet(opcode, data);
-
-                    Packet response = handler.Handle(request);
+                    var opcode = (Opcodes)Enum.ToObject(typeof(Opcodes), opcodeByte);
+                    var request = new Packet(opcode, data);
+                    var response = handler.Handle(request);
 
                     if (response == null)
                     {
@@ -59,13 +59,12 @@ namespace Client
             }
             catch (Exception e)
             {
+                session?.Stop();
+                MessageBox.Show(e.Message, "Error");
             }
             finally
             {
-                if (session != null)
-                {
-                    session.Stop();
-                }
+                session?.Stop();
             }
         }
     }
