@@ -14,34 +14,31 @@ namespace Client
 
             try
             {
-                var ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
-                var ipAddress = ipHostInfo.AddressList[0];
-                var remoteEP = new IPEndPoint(ipAddress, 43555);
-                var client = new Socket(AddressFamily.InterNetwork,
+                IPHostEntry ipHostInfo = Dns.Resolve(Dns.GetHostName());
+                IPAddress ipAddress = ipHostInfo.AddressList[0];
+                IPEndPoint remoteEp = new IPEndPoint(ipAddress, 43555);
+                Socket client = new Socket(AddressFamily.InterNetwork,
                     SocketType.Stream, ProtocolType.Tcp);
 
-                client.Connect(remoteEP);
+                client.Connect(remoteEp);
 
-                var stream = new NetworkStream(client);
-                var reader = new BinaryReader(stream);
-                var writer = new BinaryWriter(stream);
+                NetworkStream stream = new NetworkStream(client);
+                BinaryReader reader = new BinaryReader(stream);
+                BinaryWriter writer = new BinaryWriter(stream);
+                PacketHandler handler = PacketHandler.Instance;
 
                 session = new Session(client);
 
-                var handler = new PacketHandler(session);
-
                 do
                 {
-                    var size = reader.ReadUInt16();
-                    var opcodeByte = reader.ReadByte();
-                    var checkNumber = reader.ReadUInt16();
-                    var data = new byte[size];
+                    ushort size = reader.ReadUInt16();
+                    byte opcodeByte = reader.ReadByte();
+                    ushort checkNumber = reader.ReadUInt16();
+                    byte[] data = reader.ReadBytes(size);
 
-                    data = reader.ReadBytes(size);
-
-                    var opcode = (Opcodes)Enum.ToObject(typeof(Opcodes), opcodeByte);
-                    var request = new Packet(opcode, data);
-                    var response = handler.Handle(request);
+                    Opcodes opcode = (Opcodes)Enum.ToObject(typeof(Opcodes), opcodeByte);
+                    Packet request = new Packet(opcode, data);
+                    Packet response = handler.Handle(session, request);
 
                     if (response == null)
                     {

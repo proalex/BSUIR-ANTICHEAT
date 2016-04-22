@@ -27,12 +27,12 @@ namespace Client
                 throw new NullReferenceException("path is null");
             }
 
-            if (_game.Running)
+            if (_game != null && _game.Running)
             {
                 return false;
             }
 
-            var game = new GameProcess(path);
+            GameProcess game = new GameProcess(path);
 
             game.Start();
 

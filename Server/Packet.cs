@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Client
+namespace Server
 {
     public enum Opcodes : byte
     {
@@ -16,8 +16,9 @@ namespace Client
     {
         public readonly Opcodes Opcode;
         public readonly byte[] Data;
+        public readonly ushort Number;
 
-        public Packet(Opcodes opcode, byte[] data)
+        public Packet(Opcodes opcode, byte[] data, ushort number)
         {
             if (data == null)
             {
@@ -26,6 +27,7 @@ namespace Client
 
             Opcode = opcode;
             Data = data;
+            Number = number;
         }
     }
 }

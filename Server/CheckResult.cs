@@ -1,29 +1,21 @@
 ﻿using System;
 
-namespace Client
+namespace Server
 {
-    public enum Opcodes : byte
+    public class CheckResult
     {
-        MemoryPattern,
-        FileHash,
-        Module,
-        Window,
-        MemoryHash,
-        StartGame
-    }
-
-    public class Packet
-    {
+        public readonly uint Number;
         public readonly Opcodes Opcode;
         public readonly byte[] Data;
 
-        public Packet(Opcodes opcode, byte[] data)
+        public CheckResult(uint number, Opcodes opcode, byte[] data)
         {
             if (data == null)
             {
                 throw new NullReferenceException("data is null");
             }
 
+            Number = number;
             Opcode = opcode;
             Data = data;
         }
