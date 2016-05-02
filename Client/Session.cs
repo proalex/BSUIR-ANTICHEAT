@@ -6,11 +6,14 @@ namespace Client
     public class Session
     {
         private GameProcess _game;
+        private bool _gameStarted;
 
         public GameProcess Game
         {
             get { return _game; }
         }
+
+        public bool GameStarted => _gameStarted;
 
         public Session(Socket socket)
         {
@@ -43,6 +46,7 @@ namespace Client
             }
 
             _game = game;
+            _gameStarted = true;
             return true;
         }
 

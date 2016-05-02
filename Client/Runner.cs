@@ -2,6 +2,7 @@
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace Client
@@ -26,12 +27,45 @@ namespace Client
                 BinaryReader reader = new BinaryReader(stream);
                 BinaryWriter writer = new BinaryWriter(stream);
                 PacketHandler handler = PacketHandler.Instance;
-
+                
                 session = new Session(client);
 
                 do
                 {
-                    ushort size = reader.ReadUInt16();
+                    ushort size = 0;
+
+                    stream.ReadTimeout = 1000;
+
+                    do
+                    {
+                        try
+                        {
+                            size = reader.ReadUInt16();
+                            break;
+                        }
+                        catch (IOException ex)
+                        {
+                            var innerEx = ex.InnerException as SocketException;
+
+                            if (innerEx == null)
+                            {
+                                throw ex;
+                            }
+                            
+                            if (innerEx.ErrorCode != (int)SocketError.TimedOut)
+                            {
+                                throw ex;
+                            }
+                        }
+                    } while (!session.GameStarted || session.Game.Running);
+
+                    stream.ReadTimeout = Timeout.Infinite;
+
+                    if (session.GameStarted && !session.Game.Running)
+                    {
+                        break;
+                    }
+
                     byte opcodeByte = reader.ReadByte();
                     ushort checkNumber = reader.ReadUInt16();
                     byte[] data = reader.ReadBytes(size);

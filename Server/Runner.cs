@@ -37,15 +37,43 @@ public static class Runner
             {
                 if (session.RequestedChecks.Any())
                 {
+                    ushort size;
+                    byte opcodeByte;
+                    ushort checkNumber;
+                    byte[] data;
+
                     if (session.Timeout.ElapsedMilliseconds * 1000 > 30)
                     {
                         break;
                     }
 
-                    ushort size = reader.ReadUInt16();
-                    byte opcodeByte = reader.ReadByte();
-                    ushort checkNumber = reader.ReadUInt16();
-                    byte[] data = reader.ReadBytes(size);
+                    try
+                    {
+                        size = reader.ReadUInt16();
+                        opcodeByte = reader.ReadByte();
+                        checkNumber = reader.ReadUInt16();
+                        data = reader.ReadBytes(size);
+                    }
+                    catch (IOException ex)
+                    {
+                        var innerEx = ex.InnerException as SocketException;
+
+                        if (innerEx == null)
+                        {
+                            throw ex;
+                        }
+
+                        if (innerEx.ErrorCode != (int)SocketError.TimedOut)
+                        {
+                            throw ex;
+                        }
+
+                        IPEndPoint endPoint = socket.RemoteEndPoint as IPEndPoint;
+                        Console.WriteLine("IP: {0}:{1} Response timeout.",
+                            endPoint.Address, endPoint.Port);
+                        break;
+                    }
+                    
                     Opcodes opcode = (Opcodes)Enum.ToObject(typeof(Opcodes), opcodeByte);
                     Packet response = new Packet(opcode, data, checkNumber);
 
@@ -109,7 +137,7 @@ public static class Runner
 
             while (true)
             {
-                Thread clientHandler = new Thread(Runner.ClientHandler);
+                Thread clientHandler = new Thread(ClientHandler);
                 Socket socket = listener.Accept();
                 IPEndPoint endPoint = socket.RemoteEndPoint as IPEndPoint;
 
