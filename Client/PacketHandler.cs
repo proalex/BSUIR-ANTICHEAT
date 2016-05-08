@@ -71,8 +71,8 @@ namespace Client
             string hash= "";
 
             if (length > 0
-                ? Checks.ReadMemoryHash(session.Game, moduleName, offset, size, ref hash)
-                : Checks.ReadMemoryHash(session.Game, null, offset, size, ref hash))
+                ? !Checks.ReadMemoryHash(session.Game, moduleName, offset, size, ref hash)
+                : !Checks.ReadMemoryHash(session.Game, null, offset, size, ref hash))
             {
                 return null;
             }

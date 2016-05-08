@@ -206,11 +206,6 @@ namespace Client
                 throw new NullReferenceException("game is null");
             }
 
-            if (moduleName == null)
-            {
-                throw new NullReferenceException("moduleName is null");
-            }
-
             byte[] buffer = new byte[size];
 
             if (!ReadMemory(game, moduleName, offset, size, buffer))
@@ -232,11 +227,6 @@ namespace Client
             if (game == null)
             {
                 throw new NullReferenceException("game is null");
-            }
-
-            if (moduleName == null)
-            {
-                throw new NullReferenceException("moduleName is null");
             }
 
             if (!game.Running)

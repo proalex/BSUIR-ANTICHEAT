@@ -117,7 +117,7 @@ namespace Server
             }
 
             byte[] moduleNameData = Encoding.UTF8.GetBytes(moduleName);
-            byte[] data = new byte[moduleNameData.Length + 12];
+            byte[] data = new byte[moduleNameData.Length + 14];
             byte[] lengthData = BitConverter.GetBytes((ushort) moduleNameData.Length);
             byte[] offsetData = BitConverter.GetBytes(offset);
             byte[] sizeData = BitConverter.GetBytes(size);
@@ -127,6 +127,27 @@ namespace Server
             index += 2;
             Array.Copy(moduleNameData, 0, data, index, moduleNameData.Length);
             index += moduleNameData.Length;
+            Array.Copy(offsetData, 0, data, index, offsetData.Length);
+            index += offsetData.Length;
+            Array.Copy(sizeData, 0, data, index, sizeData.Length);
+            return new Packet(Opcodes.MemoryHash, data, session.NextCheckNumber());
+        }
+
+        public static Packet MemoryCheck(Session session, long offset, int size)
+        {
+            if (session == null)
+            {
+                throw new NullReferenceException("session is null");
+            }
+
+            byte[] data = new byte[14];
+            byte[] lengthData = BitConverter.GetBytes((ushort)0);
+            byte[] offsetData = BitConverter.GetBytes(offset);
+            byte[] sizeData = BitConverter.GetBytes(size);
+            int index = 0;
+
+            Array.Copy(lengthData, data, lengthData.Length);
+            index += 2;
             Array.Copy(offsetData, 0, data, index, offsetData.Length);
             index += offsetData.Length;
             Array.Copy(sizeData, 0, data, index, sizeData.Length);

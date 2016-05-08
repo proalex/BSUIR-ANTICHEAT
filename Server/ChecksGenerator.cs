@@ -132,7 +132,17 @@ namespace Server
 
         private Packet CheckMemory(Session session, MemoryChecks check)
         {
-            Packet request = PacketBuilder.MemoryCheck(session, check.ModuleName, check.Offset, check.Size);
+            Packet request;
+
+            if (check.ModuleName.Length > 0)
+            {
+                request = PacketBuilder.MemoryCheck(session, check.ModuleName, check.Offset, check.Size);
+            }
+            else
+            {
+                request = PacketBuilder.MemoryCheck(session, check.Offset, check.Size);
+            }
+
             CheckResult result = new CheckResult(request.Number,
                 check.Id, Opcodes.MemoryHash, check.Exist, check.Kick, true,
                 Encoding.UTF8.GetBytes(check.Hash));
