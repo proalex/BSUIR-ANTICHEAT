@@ -58,7 +58,7 @@ namespace Client
         [DllImport("user32.dll", SetLastError = true)]
         static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
 
-        public static int FindPatternInMemory(GameProcess game, PatternElement[] pattern)
+        public static long FindPatternInMemory(GameProcess game, PatternElement[] pattern)
         {
             if (game == null)
             {
@@ -70,7 +70,7 @@ namespace Client
                 throw new NullReferenceException("pattern is null");
             }
 
-            int result = 0;
+            long result = 0;
             SystemInfo sysInfo = new SystemInfo();
 
             GetSystemInfo(out sysInfo);
@@ -97,8 +97,7 @@ namespace Client
                     return -1;
                 }
 
-                if (memBasicInfo.Protect == PageReadwrite 
-                    && memBasicInfo.State == MemCommit)
+                if (memBasicInfo.Protect != 0 && memBasicInfo.State == MemCommit)
                 {
                     byte[] buffer = new byte[memBasicInfo.RegionSize.ToInt64()];
 
@@ -144,9 +143,20 @@ namespace Client
 
             using (MD5 md5 = MD5.Create())
             {
-                using (FileStream stream = File.OpenRead(filename))
+                try
                 {
-                    return BitConverter.ToString(md5.ComputeHash(stream)).Replace("-", "");
+                    using (FileStream stream = File.OpenRead(filename))
+                    {
+                        return BitConverter.ToString(md5.ComputeHash(stream)).Replace("-", "");
+                    }
+                }
+                catch (FileNotFoundException)
+                {
+                    return "";
+                }
+                catch (DirectoryNotFoundException)
+                {
+                    return "";
                 }
             }
         }
@@ -162,6 +172,8 @@ namespace Client
             {
                 throw new NullReferenceException("hash is null");
             }
+
+            game.Refresh();
 
             for (int i = 0; i < game.Modules.Count; i++)
             {

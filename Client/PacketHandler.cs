@@ -21,6 +21,7 @@ namespace Client
             _handlers.Add(Opcodes.Window, WindowHandler);
             _handlers.Add(Opcodes.MemoryHash, MemoryHashHandler);
             _handlers.Add(Opcodes.StartGame, StartGameHandler);
+            _handlers.Add(Opcodes.Ping, PingHandler);
         }
 
         public Packet Handle(Session session, Packet request)
@@ -35,6 +36,11 @@ namespace Client
             }
 
             return _handlers[request.Opcode].Invoke(session, request);
+        }
+
+        private Packet PingHandler(Session session, Packet request)
+        {
+            return new Packet(Opcodes.Ping, BitConverter.GetBytes(true));
         }
 
         private Packet FileHashHandler(Session session, Packet request)
@@ -80,11 +86,11 @@ namespace Client
 
             for (int i = 0; i < request.Data.Length / 2; i++)
             {
-                pattern[i].Data = request.Data[i * 2 + 2];
-                pattern[i].Check = BitConverter.ToBoolean(request.Data, i * 2 + 2);
+                pattern[i].Data = request.Data[i * 2];
+                pattern[i].Check = BitConverter.ToBoolean(request.Data, i * 2 + 1);
             }
 
-            int result = Checks.FindPatternInMemory(session.Game, pattern);
+            long result = Checks.FindPatternInMemory(session.Game, pattern);
 
             if (result == -1)
             {

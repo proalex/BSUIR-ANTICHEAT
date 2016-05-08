@@ -151,6 +151,11 @@ namespace Client
             }
         }
 
+        public void Refresh()
+        {
+            _process.Refresh();
+        }
+
         public void Kill()
         {
             if (Running)

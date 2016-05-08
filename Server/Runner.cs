@@ -1,13 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Data.Linq;
+using Database;
 using Server;
 
 public static class Runner
 {
+    public static DataContext DB;
+
     public static void ClientHandler(Object obj)
     {
         if (obj == null)
@@ -25,13 +30,11 @@ public static class Runner
         try
         {
             NetworkStream stream = new NetworkStream(socket);
-            BinaryReader reader = new BinaryReader(stream);
-            BinaryWriter writer = new BinaryWriter(stream);
             ChecksGenerator generator = ChecksGenerator.Instance;
             PacketHandler handler = PacketHandler.Instance;
             Session session = new Session(socket.RemoteEndPoint as IPEndPoint);
-
-            stream.ReadTimeout = 30000;
+            BinaryReader reader = new BinaryReader(stream);
+            BinaryWriter writer = new BinaryWriter(stream);
 
             do
             {
@@ -42,7 +45,7 @@ public static class Runner
                     ushort checkNumber;
                     byte[] data;
 
-                    if (session.Timeout.ElapsedMilliseconds * 1000 > 30)
+                    if (session.Timeout.ElapsedMilliseconds > Config.ResponseTimeout*1000)
                     {
                         break;
                     }
@@ -63,7 +66,7 @@ public static class Runner
                             throw ex;
                         }
 
-                        if (innerEx.ErrorCode != (int)SocketError.TimedOut)
+                        if (innerEx.ErrorCode != (int) SocketError.TimedOut)
                         {
                             throw ex;
                         }
@@ -73,8 +76,8 @@ public static class Runner
                             endPoint.Address, endPoint.Port);
                         break;
                     }
-                    
-                    Opcodes opcode = (Opcodes)Enum.ToObject(typeof(Opcodes), opcodeByte);
+
+                    Opcodes opcode = (Opcodes) Enum.ToObject(typeof(Opcodes), opcodeByte);
                     Packet response = new Packet(opcode, data, checkNumber);
 
                     if (!handler.Handle(session, response))
@@ -105,6 +108,10 @@ public static class Runner
                 }
             } while (true);
         }
+        catch (IOException)
+        {
+            
+        }
         catch (Exception ex)
         {
             IPEndPoint endPoint = socket.RemoteEndPoint as IPEndPoint;
@@ -121,18 +128,75 @@ public static class Runner
         }
     }
 
+    public static void ConnectToDB()
+    {
+        DB = new DataContext(
+            "Server=" + Config.DBAddress +
+            ";Database=" + Config.DBName + 
+            ";Trusted_Connection=True;");
+    }
+
+    public static int LoadChecks()
+    {
+        if (DB == null)
+        {
+            throw new NullReferenceException("DB is null");
+        }
+
+        List<Object> checks = new List<Object>();
+        Table<ModuleChecks> moduleChecksTbl = DB.GetTable<ModuleChecks>();
+        Table<WindowChecks> windowChecksTbl = DB.GetTable<WindowChecks>();
+        Table<FileChecks> fileChecksTbl = DB.GetTable<FileChecks>();
+        Table<MemoryPatterns> memoryPatternsTbl = DB.GetTable<MemoryPatterns>();
+        Table<MemoryChecks> memoryChecksTbl = DB.GetTable<MemoryChecks>();
+
+        var queryWindowChecks =
+                from check in windowChecksTbl
+                select check;
+
+        var queryModuleChecks =
+                from check in moduleChecksTbl
+                select check;
+
+        var queryFileChecks =
+                from check in fileChecksTbl
+                select check;
+
+        var queryMemoryPatterns =
+                from check in memoryPatternsTbl
+                select check;
+
+        var queryMemoryChecks =
+                from check in memoryChecksTbl
+                select check;
+
+        checks.AddRange(queryWindowChecks);
+        checks.AddRange(queryModuleChecks);
+        checks.AddRange(queryFileChecks);
+        checks.AddRange(queryMemoryPatterns);
+        checks.AddRange(queryMemoryChecks);
+        ChecksGenerator.Instance.LoadChecks(checks);
+        return checks.Count;
+    }
+
     public static void Main(string[] args)
     {
-        IPHostEntry ipHostInfo = Dns.Resolve(Dns.GetHostName());
-        IPAddress ipAddress = ipHostInfo.AddressList[0];
-        IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 43555);
+        IPAddress ipv4Addresses = Array.Find(
+                    Dns.GetHostEntry(string.Empty).AddressList,
+                    a => a.AddressFamily == AddressFamily.InterNetwork);
+        IPHostEntry ipHostInfo = Dns.GetHostEntry(Config.Host);
+        IPEndPoint localEndPoint = new IPEndPoint(ipv4Addresses, Config.Port);
         Socket listener = new Socket(AddressFamily.InterNetwork,
             SocketType.Stream, ProtocolType.Tcp);
+
+        Console.WriteLine("Loading checks from database...");
+        ConnectToDB();
+        Console.WriteLine("{0} checks loaded.", LoadChecks());
 
         try
         {
             listener.Bind(localEndPoint);
-            listener.Listen(43555);
+            listener.Listen(Config.Port);
             Console.WriteLine("Waiting for a connection...");
 
             while (true)

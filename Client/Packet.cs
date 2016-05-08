@@ -9,7 +9,8 @@ namespace Client
         Module,
         Window,
         MemoryHash,
-        StartGame
+        StartGame,
+        Ping
     }
 
     public class Packet

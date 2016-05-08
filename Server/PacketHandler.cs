@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.Linq;
 using System.Linq;
+using Database;
 
 namespace Server
 {
@@ -20,6 +22,7 @@ namespace Server
             _handlers.Add(Opcodes.Window, BasicHandler);
             _handlers.Add(Opcodes.MemoryHash, BasicHandler);
             _handlers.Add(Opcodes.StartGame, BasicHandler);
+            _handlers.Add(Opcodes.Ping, BasicHandler);
         }
 
         public bool Handle(Session session, Packet response)
@@ -56,13 +59,33 @@ namespace Server
                 return false;
             }
 
-            if (response.Data.Length != check.Data.Length || 
-                response.Data.SequenceEqual(check.Data))
+            bool result = response.Data.SequenceEqual(check.Data);
+
+            if (result ^ check.Exist)
             {
-                Console.WriteLine("IP: {0}:{1} Invalid result. Opcode {2}",
+                Console.WriteLine("IP: {0}:{1} Invalid result. Opcode: {2} Id: {3}",
                     session.RemoteIPEndPoint.Address, session.RemoteIPEndPoint.Port,
-                    check.Opcode);
-                return false;
+                    check.Opcode, check.Id);
+
+                if (check.Log)
+                {
+                    Table<ViolationLog> violationLogTbl = Runner.DB.GetTable<ViolationLog>();
+                    ViolationLog newLog = new ViolationLog()
+                    {
+                        CheckNumber = check.Id,
+                        IP = session.RemoteIPEndPoint.Address.ToString(),
+                        Type = (byte) check.Opcode,
+                        Time = DateTime.Now
+                    };
+
+                    violationLogTbl.InsertOnSubmit(newLog);
+                    Runner.DB.SubmitChanges();
+                }
+
+                if (check.Kick)
+                {
+                    return false;
+                }
             }
 
             if (session.State == SessionState.GameHashUnchecked)

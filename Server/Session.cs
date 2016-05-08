@@ -19,6 +19,7 @@ namespace Server
         public readonly List<CheckResult> RequestedChecks = new List<CheckResult>();
         public readonly Stopwatch Timeout = new Stopwatch();
         private ushort _checkNumber;
+        private int _checkIndex = 0;
 
         public Session(IPEndPoint remoteIPEndPoint)
         {
@@ -30,9 +31,23 @@ namespace Server
             RemoteIPEndPoint = remoteIPEndPoint;
         }
 
-        public ushort nextCheckNumber()
+        public ushort NextCheckNumber()
         {
             return _checkNumber++;
+        }
+
+        public int NextCheckIndex(int checksCount)
+        {
+            if (_checkIndex >= checksCount - 1)
+            {
+                _checkIndex = 0;
+            }
+            else
+            {
+                _checkIndex++;
+            }
+
+            return _checkIndex;
         }
     }
 }

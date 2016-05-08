@@ -11,7 +11,18 @@ namespace Server
 
     public static class PacketBuilder
     {
-        public static Packet BuildFileHash(Session session, string path)
+        public static Packet Ping(Session session)
+        {
+            if (session == null)
+            {
+                throw new NullReferenceException("session is null");
+            }
+
+            return new Packet(Opcodes.Ping, BitConverter.GetBytes(true), 
+                session.NextCheckNumber());
+        }
+
+        public static Packet FileCheck(Session session, string path)
         {
             if (session == null)
             {
@@ -23,10 +34,10 @@ namespace Server
             }
 
             return new Packet(Opcodes.FileHash, Encoding.UTF8.GetBytes(path), 
-                session.nextCheckNumber());
+                session.NextCheckNumber());
         }
 
-        public static Packet BuildStartGame(Session session, string path)
+        public static Packet StartGame(Session session, string path)
         {
             if (session == null)
             {
@@ -38,10 +49,10 @@ namespace Server
             }
 
             return new Packet(Opcodes.StartGame, Encoding.UTF8.GetBytes(path), 
-                session.nextCheckNumber());
+                session.NextCheckNumber());
         }
 
-        public static Packet BuildModuleGame(Session session, string hash)
+        public static Packet ModuleCheck(Session session, string hash)
         {
             if (session == null)
             {
@@ -53,10 +64,10 @@ namespace Server
             }
 
             return new Packet(Opcodes.Module, Encoding.UTF8.GetBytes(hash), 
-                session.nextCheckNumber());
+                session.NextCheckNumber());
         }
 
-        public static Packet BuildWindow(Session session, string caption)
+        public static Packet WindowCheck(Session session, string caption)
         {
             if (session == null)
             {
@@ -68,10 +79,10 @@ namespace Server
             }
 
             return new Packet(Opcodes.Window, Encoding.UTF8.GetBytes(caption),
-                session.nextCheckNumber());
+                session.NextCheckNumber());
         }
 
-        public static Packet BuildMemoryPattern(Session session, PatternElement[] pattern)
+        public static Packet MemoryPattern(Session session, PatternElement[] pattern)
         {
             if (session == null)
             {
@@ -90,10 +101,10 @@ namespace Server
                 data[i*2 + 1] = pattern[i].Check ? (byte)1 : (byte)0;
             }
 
-            return new Packet(Opcodes.MemoryPattern, data, session.nextCheckNumber());
+            return new Packet(Opcodes.MemoryPattern, data, session.NextCheckNumber());
         }
 
-        public static Packet BuildMemoryHash(Session session, string moduleName,
+        public static Packet MemoryCheck(Session session, string moduleName,
             long offset, int size)
         {
             if (session == null)
@@ -119,7 +130,7 @@ namespace Server
             Array.Copy(offsetData, 0, data, index, offsetData.Length);
             index += offsetData.Length;
             Array.Copy(sizeData, 0, data, index, sizeData.Length);
-            return new Packet(Opcodes.MemoryHash, data, session.nextCheckNumber());
+            return new Packet(Opcodes.MemoryHash, data, session.NextCheckNumber());
         }
     }
 }

@@ -7,7 +7,7 @@ namespace FileHash
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hash (test.exe): " + Checks.FileHash("test.exe"));
+            Console.WriteLine("Hash (hash): " + Checks.FileHash("hash"));
             Console.ReadLine();
         }
     }
